@@ -18,12 +18,14 @@ The goal of our analysis is to construct a predictive model that leverages histo
 This model will utilize Google Cloud Platform (GCP) tools, including BigQuery, Cloud Scheduler, Pub/Sub, and Looker Studio, to analyze and execute trades based on the Standard & Poor's 500 Index (SPY) data.
 
 **Metrics and Model:**
-
+The model chosen was a deep learning neural network (DNN) classifier.  DNNs learn by adjusting the connections between these nodes through backpropagation, enabling them to identify patterns in data. A classifier, a type of machine learning model, uses these learned patterns to assign input data to predefined categories, i.e. next day buy/sell/hold signals. Daily SPY data for more than a 30-year period with synthesized trade actions based on 10 and 30 moving average was used to train the DNN. A Cloud Function was executed daily to fetch current SPY daily data to update a real-time data table in BigQuery. The DNN model was applied to the real-time table to generate the next day trade signal. Historical SPY data and real-time trade signal data are displayed in Looker Studio.
 
 **Results:**
-
+The DNN classifier model was developed to predict and report the next day trade signal with reasonable performance. DNN training results show that it has a precision of .785 and an accuracy of .790. The confusion matrix reveals that the model is slightly better at correctly predicting sell versus buy or hold signals.
 
 **Key Findings:**
+A reasonable DNN classifier-based model can be developed for predictive trade signals using publicly available historical and real-time SPY data utilizing the Google Cloud Platform tools.
+
 
 **Software & Process Description:**
 
