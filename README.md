@@ -25,3 +25,53 @@ This model will utilize Google Cloud Platform (GCP) tools, including BigQuery, C
 
 **Key Findings:**
 
+**Software & Process Description:**
+
+  >One time process to create the model...
+
+    Cloud Shell: downloadspy.sh
+      Collects historical Yahoo Finance SPY data, SPY.csv, and sends it to spy_1994-2024 bucket
+      BigQuery table spydataRAW manually created from the SPY.csv
+  
+    BigQuery: "Create MA10&30 BSH signal no NULLS.sql"
+      Creates...
+          Closing MA10 and MA30
+          Trade_Action signal (-1=buy, 0=hold, 1=sell)
+          7 lags for Open, Low, High, Close, Volume, Trade_Action
+          Removes any records that contain NULL values
+          Sorts by Date ascending
+          Stores data in table spydataCLEAN
+    
+    BigQuery: "Create Training Data.sql" "Create Test Data.sql"
+      Creates tables spydataTrain (80% of spydataCLEAN) & spydataTest (remaining 20% of spydataCLEAN)  respectively
+  
+    BigQuery: "DNN Create spydataModel.sql"
+      Trains a deep learning neural network classifier (224 hidden nodes in three layers) to predict the next day Trade_Action using current Date, Open, High, Low, Close, Volume, and all 7 days of lagged data for those variables.
+      Uses the spydataTrain table for training.
+      Model name is spydataModel
+  
+    BigQuery: "DNN spydataModel evaluation
+      Uses the spydataTest table for statistical performance evaluation.
+  
+    BigQuery: "DNN spydataModel confusion"
+      Produces confusion matrix using spydataTest table.
+  
+  >Recurring process to predict next day...
+
+    Cloud Function: download_alphaventure_data once per day at 11pm PST via Cloud Scheduler.
+      Runs python code to fetch Alpha Venture SPY API historical data (spyrtdata.csv)
+      Creates...
+        Closing MA10 and MA30
+        Trade_Action signal (-1=buy, 0=hold, 1=sell)
+        7 lags for Open, Low, High, Close, Volume, Trade_Action
+        Removes any records that contain NULL values
+        Sorts by Date ascending
+        Stores data in table spydataCLEAN
+      Stores data in bucket spydata_realtime
+
+    BigQuery: "update_spydataRealTime.sql"
+      Takes SPY historical data (spyrtdata.csv) and stores it in bucket spydata_realtime and updates spydataRealTime table
+
+    BigQuery: "predict_trade_action.sql"
+      Applies the spydataModel to the spydataRealTime to predict the next day trade action (Pred_Trade_Action).
+      Updates Date, Open, High, Low, Close, Volume, Trade_Action, Pred_Trade_Action in table spydataRealTimePred.
